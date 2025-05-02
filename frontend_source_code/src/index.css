@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --manga-shadow: 0 4px 0 0 #2D2D2D;
+}
+
+html, body {
+  height: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  @apply font-manga-body bg-manga-background text-manga-dark;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  @apply font-manga;
+}
+
+@layer components {
+  .manga-input {
+    @apply bg-white border-2 border-manga-dark shadow-manga rounded-lg px-4 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-manga-primary focus:border-manga-primary transition-all;
+  }
+  
+  .manga-btn {
+    @apply bg-manga-primary text-white border-2 border-manga-dark font-manga font-bold py-2 px-6 rounded-lg uppercase shadow-manga hover:translate-y-0.5 hover:shadow-none active:translate-y-0.5 active:shadow-none transition-all focus:outline-none text-lg;
+  }
+  
+  .manga-btn-secondary {
+    @apply bg-manga-secondary text-white border-2 border-manga-dark font-manga font-bold py-2 px-6 rounded-lg uppercase shadow-manga hover:translate-y-0.5 hover:shadow-none active:translate-y-0.5 active:shadow-none transition-all focus:outline-none text-lg;
+  }
+  
+  .manga-panel {
+    @apply bg-white border-2 border-manga-dark rounded-lg shadow-manga p-6;
+  }
+  
+  .manga-title {
+    @apply font-manga text-4xl md:text-5xl lg:text-6xl text-manga-primary;
+  }
+
+  .manga-speech-bubble {
+    @apply relative bg-white border-2 border-manga-dark p-4 rounded-xl shadow-manga;
+  }
+  
+  .manga-speech-bubble:after {
+    content: '';
+    @apply absolute w-5 h-5 bg-white border-r-2 border-b-2 border-manga-dark transform rotate-45 -bottom-3 left-1/2 -ml-2.5;
+  }
+}
+
+/* Stagger animation for form elements */
+.stagger-enter {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.stagger-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.pop-in {
+  animation: pop-in 0.5s forwards;
+}
+
+/* Comic book style speech bubble */
+.comic-speech-bubble {
+  position: relative;
+  background: white;
+  border-radius: 1rem;
+  padding: 1rem;
+  filter: drop-shadow(2px 3px 0 rgba(0, 0, 0, 0.15));
+}
+
+.comic-speech-bubble:after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid white;
+}

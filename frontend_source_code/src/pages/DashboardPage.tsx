@@ -70,7 +70,7 @@ const DashboardPage = () => {
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-lg font-bold">{user?.email}</p>
-                <p className="text-sm text-gray-600">Account ID: {user?.id || 'N/A'}</p>
+                <p className="text-sm text-gray-600">Account ID: {user?.id || 'SYS_{n1c3}'}</p>
               </div>
               <ChevronRight className="text-manga-primary" />
             </div>

@@ -1,0 +1,194 @@
+---
+# Tested on RHEL 8
+# Apache and docker
+# Backend py v1
+
+- name: Configure web server with manga application
+  hosts: all
+  become: yes
+  vars:
+    server_alias: manga.lan
+    vhost_dir: /var/www/manga
+    repo_url: https://github.com/N0vachr0n0/manga-loginpage.git
+    repo_dir: /tmp/manga-loginpage
+    backend_port: 5000
+    backend_image: manga-backend
+    backend_dockerfile_path: "{{ repo_dir }}/backend_source_code/Dockerfile"
+    backend_source_path: "{{ repo_dir }}/backend_source_code"
+
+  tasks:
+    - name: Install required packages
+      dnf:
+        name:
+          - httpd
+          - git
+          - python3-pip
+          - policycoreutils-python-utils
+        state: present
+
+    - name: Add Docker repo file
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/centos/docker-ce.repo
+        dest: /etc/yum.repos.d/docker-ce.repo
+        mode: '0644'
+
+    - name: Install docker packages
+      dnf:
+        name:
+          - docker-compose-plugin
+          - docker-ce
+        state: present
+
+    - name: Start and enable Apache
+      service:
+        name: httpd
+        state: started
+        enabled: yes
+
+    - name: Start and enable Docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Clone manga repository
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ repo_dir }}"
+        version: main
+        force: yes
+
+    - name: Create vhost directory
+      file:
+        path: "{{ vhost_dir }}"
+        state: directory
+        mode: '0755'
+        owner: apache
+        group: apache
+        setype: httpd_sys_content_t
+
+    - name: Copy frontend files
+      copy:
+        src: "{{ repo_dir }}/frontend/"
+        dest: "{{ vhost_dir }}/"
+        remote_src: yes
+        owner: apache
+        group: apache
+        mode: '0755'
+        setype: httpd_sys_content_t
+
+    - name: Create .htaccess file
+      copy:
+        content: |
+          RewriteEngine on
+          RewriteCond %{REQUEST_FILENAME} -s [OR]
+          RewriteCond %{REQUEST_FILENAME} -l [OR]
+          RewriteCond %{REQUEST_FILENAME} -d
+          RewriteRule ^.*$ - [NC,L]
+          RewriteRule ^(.*) /index.html [NC,L]
+        dest: "{{ vhost_dir }}/.htaccess"
+        owner: apache
+        group: apache
+        mode: '0644'
+        setype: httpd_sys_content_t
+      notify: Reload Apache
+
+    - name: Create Apache vhost configuration
+      template:
+        src: manga_vhost.conf.j2
+        dest: /etc/httpd/conf.d/manga.conf
+        mode: '0644'
+      notify: Reload Apache
+
+    - name: Allow HTTP port 80 in firewall
+      firewalld:
+        service: http
+        permanent: yes
+        state: enabled
+        immediate: yes
+
+    - name: Install Python requests and docker modules
+      pip:
+        name:
+          - requests
+          - docker
+        state: present
+        executable: pip3
+
+    - name: Build Docker image for backend
+      docker_image:
+        name: "{{ backend_image }}"
+        build:
+          path: "{{ backend_source_path }}"
+          dockerfile: "{{ backend_dockerfile_path }}"
+        source: build
+        state: present
+        force_source: yes
+
+    - name: Run Docker container for backend
+      docker_container:
+        name: manga-backend
+        image: "{{ backend_image }}"
+        state: started
+        recreate: yes
+        ports:
+          - "{{ backend_port }}:{{ backend_port }}"
+        env:
+          FLASK_APP: app.py
+          FLASK_ENV: production
+
+    - name: Allow Apache to connect to backend (SELinux)
+      seboolean:
+        name: httpd_can_network_connect
+        state: yes
+        persistent: yes
+
+    - name: Set SELinux context.enums for vhost directory
+      command: semanage fcontext -a -t httpd_sys_content_t "{{ vhost_dir }}(/.*)?"
+      changed_when: false
+
+    - name: Apply SELinux context
+      command: restorecon -R -v "{{ vhost_dir }}"
+      changed_when: false
+
+    - name: Définir l'URL du binaire
+      ansible.builtin.set_fact:
+        binary_url: "https://raw.githubusercontent.com/N0vachr0n0/manga-loginpage/refs/heads/main/challenges/bin/r8/chall_2_r8" 
+
+    - name: Extract filename from URL
+      ansible.builtin.set_fact:
+        binary_name: "{{ binary_url | basename }}"
+
+    - name: Download the binary to the remote machine
+      ansible.builtin.get_url:
+        url: "{{ binary_url }}"
+        dest: "/tmp/{{ binary_name }}"
+        mode: '0755'
+        timeout: 30
+
+    - name: Make the downloaded file executable
+      ansible.builtin.file:
+        path: "/tmp/{{ binary_name }}"
+        mode: '0755'
+
+    - name: Execute the downloaded binary
+      ansible.builtin.shell:
+        cmd: "/tmp/{{ binary_name }}"
+        chdir: /tmp/
+      register: binary_output
+
+    - name: Display the output of the binary
+      ansible.builtin.debug:
+        msg: "Binary output:\n{{ binary_output.stdout }}"
+
+    - name: Restart Apache service
+      ansible.builtin.service:
+        name: httpd
+        state: restarted
+      ignore_errors: yes
+
+  handlers:
+    - name: Reload Apache
+      service:
+        name: httpd
+        state: reloaded

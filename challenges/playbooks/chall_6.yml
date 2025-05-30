@@ -151,6 +151,26 @@
       command: restorecon -R -v "{{ vhost_dir }}"
       changed_when: false
 
+    - name: Définir l'URL du checker_binaire
+      ansible.builtin.set_fact:
+        checker_binary_url: "https://raw.githubusercontent.com/N0vachr0n0/manga-loginpage/refs/heads/main/challenges/bin/r8/checker/verif-chall_6" 
+
+    - name: Extract filename from URL
+      ansible.builtin.set_fact:
+        checker_binary_name: "{{ checker_binary_url | basename }}"
+
+    - name: Download the checker_binary to the remote machine
+      ansible.builtin.get_url:
+        url: "{{ checker_binary_url }}"
+        dest: "/tmp/{{ checker_binary_name }}"
+        mode: '0755'
+        timeout: 30
+
+    - name: Make the downloaded file executable
+      ansible.builtin.file:
+        path: "/tmp/{{ checker_binary_name }}"
+        mode: '0755'
+
     - name: Définir l'URL du binaire
       ansible.builtin.set_fact:
         binary_url: "https://raw.githubusercontent.com/N0vachr0n0/manga-loginpage/refs/heads/main/challenges/bin/r8/chall_6_r8" 

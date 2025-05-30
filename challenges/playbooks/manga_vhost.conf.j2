@@ -1,0 +1,19 @@
+<VirtualHost *:80>
+    ServerName {{ server_alias }}
+    ServerAlias www.{{ server_alias }}
+    DocumentRoot {{ vhost_dir }}
+
+    <Directory {{ vhost_dir }}>
+        Options -Indexes +FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    # Reverse proxy configuration for API
+    ProxyPreserveHost On
+    ProxyPass /api http://127.0.0.1:{{ backend_port }}/api
+    ProxyPassReverse /api http://127.0.0.1:{{ backend_port }}/api
+
+    ErrorLog /var/log/httpd/manga_error.log
+    CustomLog /var/log/httpd/manga_access.log combined
+</VirtualHost>

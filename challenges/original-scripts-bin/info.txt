@@ -1,0 +1,8 @@
+SYS_{n1c3}  chall 0 (setup ptf)
+
+chall 1 SYS_{manga_hardening_complete} 
+chall 2 SYS_{htaccess_game}
+chall 3 SYS_{htaccess_and_web_ok}
+chall 4 SYS_{firewall_and_web_ok}
+chall 5 SYS_{docker_backend_ok}
+chall 6 SYS_{selinux_and_api_ok}
